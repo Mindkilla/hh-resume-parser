@@ -9,8 +9,8 @@ import java.awt.event.ActionListener;
  * @author Andrey Smirnov
  * @date 01.02.2018
  */
-public class GuiCreator {
-    public static void guiApp() {
+class AppGui {
+    static void createWindow() {
 
         //Main frame
         final JFrame guiFrame = new JFrame();
@@ -56,13 +56,7 @@ public class GuiCreator {
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.setAcceptAllFileFilterUsed(false);
                 if (chooser.showOpenDialog(chooser) == JFileChooser.APPROVE_OPTION) {
-                    System.out.println("getCurrentDirectory(): "
-                            + chooser.getCurrentDirectory());
                     inDirectory.setText(chooser.getSelectedFile().getPath());
-                    System.out.println("getSelectedFile() : "
-                            + chooser.getSelectedFile());
-                } else {
-                    System.out.println("No Selection ");
                 }
             }
         });
@@ -75,13 +69,7 @@ public class GuiCreator {
                 chooser.setFileSelectionMode(JFileChooser.DIRECTORIES_ONLY);
                 chooser.setAcceptAllFileFilterUsed(false);
                 if (chooser.showOpenDialog(chooser) == JFileChooser.APPROVE_OPTION) {
-                    System.out.println("getCurrentDirectory(): "
-                            + chooser.getCurrentDirectory());
                     outDirectory.setText(chooser.getSelectedFile().getPath());
-                    System.out.println("getSelectedFile() : "
-                            + chooser.getSelectedFile());
-                } else {
-                    System.out.println("No Selection ");
                 }
             }
         });
@@ -101,4 +89,6 @@ public class GuiCreator {
         //make sure the JFrame is visible
         guiFrame.setVisible(true);
     }
+
+    private AppGui() {}
 }
