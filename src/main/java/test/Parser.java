@@ -1,5 +1,6 @@
 package test;
 
+import com.google.common.collect.ImmutableList;
 import org.apache.poi.openxml4j.opc.OPCPackage;
 import org.apache.poi.ss.usermodel.BorderStyle;
 import org.apache.poi.ss.usermodel.Cell;
@@ -20,6 +21,15 @@ import java.util.regex.Pattern;
  * @date 01.02.2018
  */
 class Parser {
+
+    public static final List<String> headers = ImmutableList.of("Адрес электронной почты", "Фамилия", "Имя", "Отчество", "Дата рождения",
+            "Номер телефона", "Регион проживания либо город", "Гражданство",
+            "Год окончания вуза (последнего места обучения)", "Наименование вуза",
+            "Образование степень", "Специальность или факультет");
+
+    public static final String PLACE = "Проживает: ";
+    public static final String CITIZENSHIP = "Гражданство: ";
+    public static final String EDUCATION = "Образование";
 
     static void startParsing(String inDir, String outDir, JFrame guiFrame) {
         int counter = 0;
@@ -42,28 +52,11 @@ class Parser {
                                 for (XWPFRun r : p.getRuns()) {
                                     System.out.println(r.getText(0));
                                     content.add(r.getText(0));
-                                    /*String text = r.getText(0);
-                                    if (text != null && text.contains("needle")) {
-                                        text = text.replace("needle", "haystack");
-                                        r.setText(text,0);
-                                    }*/
                                 }
                             }
                         }
                     }
                 }
-                /*Iterator<IBodyElement> bodyElementIterator = xdoc.getBodyElementsIterator();
-                while (bodyElementIterator.hasNext()) {
-                    IBodyElement element = bodyElementIterator.next();
-                    if ("TABLE".equalsIgnoreCase(element.getElementType().name())) {
-                        List<XWPFTable> tableList = element.getBody().getTables();
-                        for (XWPFTable table : tableList) {
-                            System.out.println("Total Number of Rows of Table:" + table.getNumberOfRows());
-                            System.out.println(table.getText());
-                        }
-                        counter++;
-                    }
-                }*/
                 contentMap.put(counter, content);
                 counter++;
             }
@@ -81,7 +74,7 @@ class Parser {
         //template
     }
 
-    public static void createExcel(Object[][] data, String outDir){
+    public static void createExcel( List<List<String>> data, String outDir){
         final String FILE_NAME = outDir + "\\Summary table.xlsx";
         XSSFWorkbook workbook = new XSSFWorkbook();
         XSSFSheet sheet = workbook.createSheet();
@@ -89,7 +82,7 @@ class Parser {
         int rowNum = 0;
         System.out.println("Creating excel");
 
-        for (Object[] datatype : data) {
+        for (List<String> datatype : data) {
             Row row = sheet.createRow(rowNum++);
             int colNum = 0;
             for (Object field : datatype) {
@@ -117,52 +110,123 @@ class Parser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-
         System.out.println("Done");
     }
 
-    private static Object [][] processDataForExcel(Map<Integer, List<String>> contentMap) {
-        //template
-        /*[Морозов Павел Андреевич, Мужчина, 21 год, родился , 23 апреля 1996, +7 (985) 9855831,
-        , — предпочитаемый способ связи, mr.morozov96@gmail.com, Проживает: , Москва, , м. Войковская
-        , Гражданство: , Россия, , есть разрешение на работу: Россия, Не готов к переезду
-        , готов к редким командировкам, Желаемая должность и зарплата, Менеджер по подбору персонала
-        , Начало карьеры, студенты, • Управление персоналом, • Административный персонал, • Продажи
-        , Занятость: полная занятость, График работы: полный день, Желательное время в пути до работы: не имеет значения
-        , 40 000, null, руб., Образование, Высшее, 2017, Московский психолого-социальный университет, Москва, юридический
-        , Управление персоналом, Ключевые навыки, Знание языков, Русский , — родной, Английский , — базовые знания
-        , Навыки, Управление командой,   , Подбор персонала,   , Оценка кандидатов,   , Адаптация персонала
-        ,   , Аутплейсмент, Дополнительная информация, Обо мне, В последние годы проходил обучение без возможности работать.]
-        */
-        List<List<String>> data2 = new ArrayList<List<String>>();
-        List<String> header = new ArrayList<String>();
-        header.addAll(new String[]{"Адрес электронной почты", "Фамилия", "Имя", "Отчество", "Дата рождения",
-                "Номер телефона", "Регион проживания либо город", "Гражданство",
-                "Год окончания вуза (последнего места обучения)", "Наименование вуза",
-                "Образование степень", "Специальность или факультет"})
-        data2.add(header); = new String[]{"Адрес электронной почты", "Фамилия", "Имя", "Отчество", "Дата рождения",
-                "Номер телефона", "Регион проживания либо город", "Гражданство",
-                "Год окончания вуза (последнего места обучения)", "Наименование вуза",
-                "Образование степень", "Специальность или факультет"};
-
-
+    private static List<List<String>> processDataForExcel(Map<Integer, List<String>> contentMap) {
+        List<List<String>> dataForExcel = new ArrayList<List<String>>();
+        dataForExcel.add(headers);
         for (int i = 0;contentMap.size()>i ; i++){
             List<String> content = contentMap.get(i);
-            data2[i+1] =  new String[]{content.get(0)};
-
+            List<String> rowsAfterHeader = getRowsFromContent(content);
+            dataForExcel.add(rowsAfterHeader);
         }
-        /*String fio = contentMap.get(0).get(0);
-        String dataR = contentMap.get(0).get(2);
-        String email = contentMap.get(0).get(5);
-        Pattern p = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b", Pattern.CASE_INSENSITIVE);
-        for (String str : contentMap.get(0))
+        return dataForExcel;
+    }
+
+    private static List<String> getRowsFromContent(List<String> content) {
+        List<String> rows = new ArrayList<String>();
+        String [] fio = content.get(0).split(" ");
+        String family = fio[0];
+        String name = fio[1];
+        String surname = fio[2];
+        String dataR = content.get(2);
+        String email = getEmail(content);
+        String telephone = getPhone(content);
+        String place = getPlace(content);
+        String citizenShip = getCitizenShip(content);
+        String[] education = getEducation(content);
+        String eduType = education[0];
+        String eduYear = education[1];
+        String eduName = education[2];
+        String eduSpec = education[3];
+
+        rows.add(email);
+        rows.add(family);
+        rows.add(name);
+        rows.add(surname);
+        rows.add(dataR);
+        rows.add(telephone);
+        rows.add(place);
+        rows.add(citizenShip);
+        rows.add(eduYear);
+        rows.add(eduName);
+        rows.add(eduType);
+        rows.add(eduSpec);
+
+        return rows;
+    }
+
+    private static String[] getEducation(List<String> content) {
+        String [] str = new String[]{};
+        for (int i = 0; content.size() > i ; i++)
         {
+            if (content.get(i) != null && content.get(i).equals(EDUCATION))
+            {
+                return new String[]{content.get(i+1), content.get(i+2), content.get(i+3), content.get(i+4)};
+            }
+        }
+        return str;
+    }
+
+    private static String getCitizenShip(List<String> content) {
+        String str = "";
+        for (int i = 0; content.size() > i ; i++)
+        {
+            if (content.get(i) != null && content.get(i).equals(CITIZENSHIP))
+            {
+                return content.get(i+1);
+            }
+        }
+        return str;
+    }
+
+    private static String getPlace(List<String> content) {
+        String place = "";
+        for (int i = 0; content.size() > i ; i++)
+        {
+            if (content.get(i) != null && content.get(i).equals(PLACE))
+            {
+                return content.get(i+1);
+            }
+        }
+        return place;
+    }
+
+    private static String getPhone(List<String> content) {
+        String phone = "";
+        Pattern p = Pattern.compile("^\\+\\d\\S\\(\\d\\d\\d\\)\\S\\d\\d\\d\\d\\d\\d\\d$", Pattern.CASE_INSENSITIVE);
+        for (String str : content)
+        {
+            String result = getStrFromPattern(p, str);
+            if (result != null) {
+                return result;
+            }
+        }
+        return phone;
+    }
+
+    private static String getEmail(List<String> content) {
+        String email = "";
+        Pattern p = Pattern.compile("\\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\\.[A-Z]{2,4}\\b", Pattern.CASE_INSENSITIVE);
+        for (String str : content)
+        {
+            String result = getStrFromPattern(p, str);
+            if (result != null) {
+                return result;
+            }
+        }
+        return email;
+    }
+
+    private static String getStrFromPattern(Pattern p, String str) {
+        if ( str != null && str != " ") {
             Matcher matcher = p.matcher(str);
             if (matcher.matches()) {
-                String email2 = matcher.group();
+                return matcher.group();
             }
-        }*/
-        return data2;
+        }
+        return null;
     }
 
     private static List<File> getFiles(File inFolder) {
